@@ -275,7 +275,7 @@ int main (){
                                 }
                                 msgtick = 62;
                             }
-                            shb.erase(shb.begin() + 1);
+                            shb.erase(shb.begin() + i);
                             break;
                         }
                     }
@@ -644,7 +644,7 @@ int main (){
                             beep();
                             powerup = powerups[i].type;
                             pface = 10;
-                            poweruptime = 170;
+                            poweruptime = 170 + powertbonus;
                             if (powerup == 3){
                                 s+= 200;
                             }
@@ -889,6 +889,10 @@ int main (){
                 dir = -dir;
             }
         }
+
+        if (s < 0){
+            s = 0;
+        }
         
         erase(); //printing the actuall stuffs such as the mice and the cat and the powerups and the bombs on the screen
         for (int i = 0; i < stars.size(); i++){ //star print
@@ -996,9 +1000,9 @@ int main (){
         attron(COLOR_PAIR(2));
         printw("%d", lives);
         attroff(COLOR_PAIR(2));
-        printw(" score=%d", s);
+        printw(" SCORE %07d", s);
         attroff(COLOR_PAIR(2));
-        mvprintw(2, 0, "wave = %d", wave);
+        mvprintw(2, 0, "wave = %02d", wave);
 
         if (wstart > 0){ //The giant WAVE: # thing that appears
             wstart--;
@@ -1009,8 +1013,6 @@ int main (){
 
         napms(32);
     }
-
-    endwin();
 
     int gotick = 0;
     bool goscreen = true;
@@ -1077,5 +1079,6 @@ int main (){
         napms(32);
     }
 
+    endwin();
     return 0;
 }
