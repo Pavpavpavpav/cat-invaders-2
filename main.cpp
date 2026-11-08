@@ -37,6 +37,7 @@ struct powerup {
 
 struct popup {
     int x, y;
+    int dx;
     int value;
     int timer;
 };
@@ -136,7 +137,7 @@ int main (){
     auto ppoint = [&](int pts, int mx, int my){
         int pcombo = combo;
         s += (combo * pts);
-        popup.push_back({mx, my, powerup == 3 ? 2*(combo * pts) : combo * pts, 20});
+        popup.push_back({mx, my, (rand() % 3) - 1, combo * pts, 20});
         if (combo < 5){
             combo++;
         }
@@ -572,6 +573,9 @@ int main (){
             popup[i].timer--;
             if (popup[i].timer % 5 == 0){
                 popup[i].y--;
+                if (popup[i].timer % 10 == 0){
+                    popup[i].x += popup[i].dx;
+                }
             }
             if (popup[i].timer <= 0){
                 popup.erase(popup.begin() + i);
