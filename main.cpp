@@ -95,6 +95,9 @@ int main (){
     int blinktimer = 160;
 
     float cooldown = 0;
+    int maxcd = 32;
+    int maxbullets = 1; //If ur changing it just remember that the max bullet size is this + 1 cos stuff is counted from 0 
+    int pwrbulmult[] = {1, 3, 2, 1, 2};
 
     std::vector<bullet> bullets;
     int btick = 0;
@@ -110,8 +113,7 @@ int main (){
     int bombblink = 31;
     int bobmtype = 0;
 
-    int maxbullets[] = { 2, 6, 4, 2};
-    const char* powername[] { "none", "Spreadshot", "Frenzy", "Double points"};
+    const char* powername[] { "none", "Spreadshot", "Frenzy", "Double points", "", "Confusion"};
 
     std::vector<mouse> mice;
     int dir = 1;
@@ -136,6 +138,23 @@ int main (){
             }
         }
         wstart = 62;
+    };
+
+
+    std::string typch;
+    bool gmode = false;
+    bool evilcheat = false;
+    bool nocd = false;
+    bool infbul = false;
+    int cheatsactive = 0;
+
+    auto Cheatc = [&](const std::string& code){ //recognize cheat codes if the player is evil to type them, idk if u really can modify this
+        if (typch.size () >= code.size() && typch.compare(typch.size() - code.size(), code.size(), code) == 0){
+            typch.clear();
+            evilcheat = true;
+            return true;
+        }
+        return false;
     };
 
     std::vector<bgstar> stars;
@@ -256,6 +275,55 @@ int main (){
         }
 
         int ch = getch();
+
+        if (ch >= 32 && ch < 127){
+            typch += (char)ch;
+            if (typch.size() > 32){
+                typch.erase(0, typch.size() - 32);
+            }
+        }
+
+        //Cheat codes if u wanna be evil VVVV
+        if (Cheatc("life") || Cheatc("healme")){
+            lives++;
+        }
+        if (Cheatc("god") || Cheatc("adadadadddaadadadaaaadadad")){
+            gmode = !gmode;
+            if (gmode == true){
+                cheatsactive++;
+            }
+            else {
+                cheatsactive--;
+            }
+        }
+        if (Cheatc("bored") || Cheatc("cooldownbegone") || Cheatc("nocd")){
+            nocd = !nocd;
+            if (nocd == true){
+                cheatsactive++;
+            }
+            else {
+                cheatsactive--;
+            }
+        }
+        if (Cheatc("infinity") || Cheatc("nolimit")){
+            infbul = !infbul;
+            if (infbul == true){
+                cheatsactive++;
+            }
+            else {
+                cheatsactive--;
+            }
+        }
+        if (Cheatc("ratpoison")){
+            for (int i = 0; i < mice.size(); i++){
+                mice[i].alive = false;
+            }
+        }
+        if (Cheatc("bomb") || Cheatc("bobm")){
+            powerups.push_back({Xpl, 1, 4});
+        }
+
+
         
         stick++; //bg stars logic under here
         for (int i = 0; i < stars.size(); i++){
@@ -282,47 +350,31 @@ int main (){
             Xpl++;
         }
         if (ch == ' ' && cooldown == 0){
-            switch (powerup){
-                case 1:
-                    if (bullets.size() <= 5){
+            int shot = (powerup == 1) ? 3 : 1;
+            int mbul = (maxbullets + 1)* pwrbulmult[powerup];
+            if (infbul == true || (int)bullets.size() + shot <= mbul){
+                if (powerup == 1){
                     bullets.push_back({Xpl, Ypl - 1, -1});
                     bullets.push_back({Xpl, Ypl - 1, 0});
                     bullets.push_back({Xpl, Ypl - 1, 1});
-                    fireface = 10;
-                    beep();
-                    cooldown = 32;
+                }
+                else if (powerup == 5){ // wip
+                    if (rand() % 2 == 0){
+                        bullets.push_back({Xpl, Ypl - 1, rand() % 4});
                     }
-                    break;
-                case 2: 
-                    if (bullets.size() <= 3){
-                        bullets.push_back({Xpl, Ypl - 1, 0});
-                        fireface = 10;
-                        beep();
-                        cooldown = 8;
+                    else {
+                        bullets.push_back({Xpl, Ypl - 1, -(rand() % 4)});
                     }
-                    break;
-                default:
-                    if (bullets.size() <= 1){
-                        bullets.push_back({Xpl, Ypl - 1, 0});
-                        fireface = 10;
-                        beep();
-                        cooldown = 32;
-                    }
-                    break;
+                }
+                else {
+                    bullets.push_back({Xpl, Ypl - 1, 0});
+                }
+                fireface = 10;
+                beep();
+                if (nocd == false){
+                    cooldown = (powerup == 2) ? maxcd / 4 : maxcd;
+                }
             }
-        }
-        if (ch == '1') {
-            powerups.push_back({Xpl, 1, 1});
-        }
-
-        if (ch == '2') {
-            powerups.push_back({Xpl, 1, 2});
-        }
-        if (ch == '3'){
-            powerups.push_back({Xpl, 1, 3});
-        }
-        if (ch == '4') {
-            powerups.push_back({Xpl, 1, 4});
         }
 
         if (hurtface > 0){
@@ -387,7 +439,7 @@ int main (){
             }
 
             for (int i = bullets.size() - 1; i >= 0; i--){
-                if (bullets[i].y < 0){
+                if (bullets[i].y < 0 || bullets[i].x < 0 || bullets[i].x >= Xborder){
                     bullets.erase(bullets.begin() + i);
                     continue;
                 }
@@ -466,9 +518,11 @@ int main (){
             }
 
             if (abs(y - Ypl) <= 2 && Xpl + 3 >= x - 2 && Xpl - 3 <= x + 2){
-                lives--;
-                s -= 250;
-                hurtface = 15;
+                if (gmode == false){
+                    lives--;
+                    s -= 250;
+                    hurtface = 15;
+                }
             }
 
             for (int i = 0; i < mice.size(); i++){
@@ -643,8 +697,34 @@ int main (){
                 mvprintw(mice[i].y, mice[i].x, dir == 1 ? "~o>" : "<o~");
             }
         }
+
+        std::string inf = "inf";
+
         attroff(COLOR_PAIR(3)); //HUD PRINT
-        mvprintw(0, 0, "bullets=%d/%d cooldown=%.1f powertime=%d power=%s", (int)bullets.size(), maxbullets[powerup], cooldown/31, poweruptime/31, powername[powerup]);
+
+        if (cheatsactive > 0){
+            int cheatsdisp[] = {0, 0, 0};
+            for (int i = 0; i < cheatsactive; i++){
+                if (cheatsdisp[0] == 0 && gmode == true){
+                    mvprintw(i, Xborder - 8, "GODMODE");
+                    cheatsdisp[0] = 1;
+                }
+                else if (cheatsdisp[1] == 0 && nocd == true){
+                    mvprintw(i, Xborder - 12, "NO COOLDOWN");
+                    cheatsdisp[1] = 1;
+                }
+                else if (cheatsdisp[2] == 0 && infbul == true){
+                    mvprintw(i, Xborder - 12, "INF BULLETS");
+                    cheatsdisp[2] = 1;
+                }
+            }
+        }
+        if (infbul == false){
+            mvprintw(0, 0, "bullets=%d/%d cooldown=%.1f powertime=%d power=%s", (int)bullets.size(), (maxbullets + 1) * pwrbulmult[powerup], cooldown/31, poweruptime/31, powername[powerup]);
+        }
+        else {
+            mvprintw(0, 0, "bullets=%d/%s cooldown=%.1f powertime=%d power=%s", (int)bullets.size(), inf.c_str(), cooldown/31, poweruptime/31, powername[powerup]);
+        }
         mvprintw(1, 0, "lives=");
         attron(COLOR_PAIR(2));
         printw("%d", lives);
@@ -714,6 +794,12 @@ int main (){
 
         mvprintw(Yborder / 2, Xborder / 2 - 5, "SCORE: %d", s);
         mvprintw(Yborder / 2 + 1, Xborder / 2 - 5, "WAVE: %d", wave);
+
+        if (evilcheat == true){
+            attron(COLOR_PAIR(2) | A_BOLD);
+            mvprintw(Yborder / 2 + 2, Xborder / 2 - 4, "CHEATER!");
+            attroff(COLOR_PAIR(2) | A_BOLD);
+        }
 
         if ((gotick / 16) % 2 == 0){
             mvprintw(Yborder / 2 + 4, Xborder / 2 - 9, "PRESS SPACE TO EXIT");
