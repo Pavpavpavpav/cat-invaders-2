@@ -69,6 +69,7 @@ int main (){
           "=^>.<^=",
           "=^o o^=",
           "=^! !^=",
+          "=^$ $^=",
         }
     };
 
@@ -89,7 +90,6 @@ int main (){
     int Ypl = Yborder - 4;
 
     int lives = 3; //# of bombs the cat can withstanc
-    int nextlife = 5000; //# of points for an extra life
     int hurtface = 0;
 
     bool r = true;
@@ -98,7 +98,7 @@ int main (){
     float cooldown = 0;
     int maxcd = 32;
     int maxbullets = 1; //If ur changing it just remember that the max bullet size is this + 1 cos stuff is counted from 0 
-    int pwrbulmult[] = {1, 3, 2, 1, 2};
+    int pwrbulmult[] = {1, 3, 2, 1, 1, 1};
 
     std::vector<bullet> bullets;
     int btick = 0;
@@ -108,6 +108,7 @@ int main (){
     int ptick = 0;
     int pface = 0;
     int poweruptime = 0;
+    int powertbonus = 0;
     int powerup = 0;
 
     std::vector<explosion> boom;
@@ -163,6 +164,218 @@ int main (){
         stars.push_back({rand() % Xborder, rand() % Yborder, 3 + rand() % 4});
     }
     int stick = 0;
+
+    int boughtam[4] = {0, 0, 0, 0};
+    const char* upname[4] = {"+ Life", "+ Pwr Up time", "- Cooldown", "+ Bullet Limit"};
+    int price[4] = {3200, 1200, 2500, 2500};
+
+    auto Shop = [&](){   //name should be explanory, tweak from here if u wanna mess with the shop code i wrote
+        std::vector<bullet> shb;
+        int shx = Xborder / 2;
+
+        int shbtick = 0;
+        int shcd = 0;
+        int shface = 0;
+        int shtick = 0;
+        int msgtick = 0;
+        int shsprite = 0;
+
+        std::string msg;
+        bool sh = true;
+
+        int signw[5] = {3, 3, 3, 3, 6};
+        int signx[5];
+        
+        for (int i = 0; i < 5; i++) {
+            signx[i] = Xborder * (i + 1) / 6 - signw[i] / 2;
+        }
+        int signy = 11;
+
+        flushinp();
+
+        while(sh){
+            shtick++;
+
+            int shch = getch(); 
+
+            if (shch == 'q'){ // shop key inputs and what the stuffs they do
+                sh = false;
+            }
+            if ((shch == 'a' || shch == KEY_LEFT) && shx > 3){
+                shx--;
+            }
+            if ((shch == 'd' || shch == KEY_RIGHT) && shx < Xborder - 4){
+                shx++;
+            }
+            if (shch == ' ' && shcd == 0 && shb.size() < 2){
+                shb.push_back({shx, Ypl - 1, 0});
+                shcd = 12;
+                shface = 62;
+            }
+            
+            if (shcd > 0){
+                shcd--;
+            }
+
+            shsprite = 0;
+
+            if (shface > 0){
+                shface--;
+                shsprite = 5;
+            }
+
+            if (shtick % 100 > 92){
+                shsprite = 1;
+            }
+
+            shbtick++;
+            if (shbtick > 2){
+                shbtick = 0;
+                for (int i = 0; i < shb.size(); i++){
+                    shb[i].y--;
+                }
+                for (int i = shb.size() - 1; i >= 0; i--){
+                    if (shb[i].y < 3){
+                        shb.erase(shb.begin() + i);
+                        continue;
+                    }
+                    for (int sign = 0; sign < 5; sign++){
+                        if (abs(shb[i].y - signy) <= 1 && shb[i].x >= signx[sign] && shb[i].x <= signx[sign] + signw[sign] - 1){
+                            if (sign == 4){
+                                sh = false;
+                            }
+                            else {
+                                int cost = price[sign] + (1200 * (0 + boughtam[sign]));
+                                bool max = (sign == 0) ? (lives >= 9) : (boughtam[sign] >= 4);
+
+                                if (max){
+                                    msg = "Maximum already owned!";
+                                }
+                                else if (s < cost){
+                                    msg = "Not enough score!";
+                                }
+                                else {
+                                    s -= cost;
+                                    boughtam[sign]++;
+                                    switch(sign){
+                                        case 0:
+                                            lives++;
+                                            break;
+                                        case 1: 
+                                            powertbonus += 62;
+                                            break;
+                                        case 2:
+                                            maxcd -= 4;
+                                            break;
+                                        case 3:
+                                            maxbullets++;
+                                            break;
+                                    }
+                                    msg = std::string("Bought: ") + upname[sign];
+                                }
+                                msgtick = 62;
+                            }
+                            shb.erase(shb.begin() + 1);
+                            break;
+                        }
+                    }
+                }
+            }
+
+            stick++; //bg stars logic under here
+            for (int i = 0; i < stars.size(); i++){
+                if (stick % stars[i].speed == 0){
+                    stars[i].y++;
+                    if (stars[i].y >= Yborder){
+                        stars[i].y = 0;
+                        stars[i].x = rand() % Xborder;
+                        stars[i].speed = 3 + rand() % 4;
+                    }
+                }
+            }
+
+            erase();
+            for (int i = 0; i < stars.size(); i++){
+                if (rand() % 40 == 0){
+                    continue;
+                }
+                attron(A_DIM);
+                if (stars[i].speed <= 4){
+                    mvprintw(stars[i].y, stars[i].x, "*");
+                }
+                else {
+                    mvprintw(stars[i].y, stars[i].x, ".");
+                }
+                attroff(A_DIM);
+            }
+
+            attron(COLOR_PAIR(1) | A_BOLD); // shop title print
+            mvprintw(1, Xborder / 2 - 8, "== UPGRADE SHOP ==");
+            attroff(COLOR_PAIR(1) | A_BOLD);
+            mvprintw(2, (Xborder - (int)snprintf(NULL, 0, "SCORE: %d", s)) / 2, "SCORE: %d", s);
+
+            for (int i = 0; i < 4; i++){    // shop options print
+                int cost = price[i] + (1200 * (0 + boughtam[i]));
+                int max = (i == 0) ? (lives >= 9) : (boughtam[i] >= 4);
+
+                if (max){
+                    attron(COLOR_PAIR(2));
+                }
+                else if (s >= cost){
+                    attron(COLOR_PAIR(4) | A_BOLD);
+                }
+                else {
+                    attron(A_DIM);
+                }
+                if (max){
+                    mvprintw(4 + i, Xborder / 2 - 15, "[%d] %-16s MAX", i + 1, upname[i]);
+                }
+                else {
+                    mvprintw(4 + i, Xborder /2 - 15, "[%d] %-16s %d pts", i + 1, upname[i], cost);
+                }
+                if (max){
+                    attroff(COLOR_PAIR(2));
+                }
+                else if (s >= cost){
+                    attroff(COLOR_PAIR(4) | A_BOLD);
+                }
+                else {
+                    attroff(A_DIM);
+                }
+            }
+
+            mvprintw(9, Xborder / 2 - 19, "shoot to buy - shoot exit to well exit");
+
+            for (int sign = 0; sign < 4; sign++){ // shop shoot options print
+                mvprintw(signy, signx[sign], "[%d]", sign + 1);
+            }
+
+            attron(COLOR_PAIR(2) | A_BOLD);
+            mvprintw(signy, signx[4], "[EXIT]");
+            attroff(COLOR_PAIR(2) | A_BOLD);
+
+            if (msgtick > 0){ //shop msg (if any) printy
+                msgtick--;
+                mvprintw(13, Xborder / 2 - (int)msg.size() / 2, "%s", msg.c_str());
+            }
+
+            for (int i = 0; i < shb.size(); i++){ //bullet print
+                attron(A_BOLD);
+                mvprintw(shb[i].y, shb[i].x, "$");
+                attroff(A_BOLD);
+            }
+
+            attron(COLOR_PAIR(1));
+            mvprintw(Ypl, shx - 3, "%s", cat.sprite[shsprite].c_str());
+            attroff(COLOR_PAIR(1));
+
+            wnoutrefresh(stdscr);
+            doupdate();
+            napms(32);
+        }
+
+        flushinp();
+    };
 
     bool titlescreen = true;
     int titltick = 0;
@@ -268,11 +481,6 @@ int main (){
         }
         else {
             currsprite = 0;
-        }
-
-        if (s >= nextlife){
-            lives++;
-            nextlife += 5000; 
         }
 
         int ch = getch();
@@ -641,6 +849,7 @@ int main (){
 
         if (alive.empty()){ //if all dead make new wave basically
             wave++;
+            Shop();
             Wave();
         }
 
