@@ -22,6 +22,7 @@ struct mouse {
     bool alive;
     int row;
     int fdel;
+    int hp;
 };
 
 struct powerup {
@@ -134,7 +135,7 @@ int main (){
 
         for (int row = 0; row < 4; row++){
             for (int col = 0; col < 8; col++){
-                mice.push_back({10 + col * 5, -3, true, 3 + row * 2, col * 3 + row * 8});
+                mice.push_back({10 + col * 5, -3, true, 3 + row * 2, col * 3 + row * 8, (row > 2 - wave / 5) ? 2 : 1});
             }
         }
         wstart = 62;
@@ -378,7 +379,7 @@ int main (){
                     bullets.push_back({Xpl, Ypl - 1, 0});
                     bullets.push_back({Xpl, Ypl - 1, 1});
                 }
-                else if (powerup == 5){ // wip
+                else if (powerup == 5){ 
                     if (rand() % 2 == 0){
                         bullets.push_back({Xpl, Ypl - 1, rand() % 4});
                     }
@@ -424,6 +425,12 @@ int main (){
                     switch (powerups[i].type){
                         case 4:
                             boom.push_back({powerups[i].x, powerups[i].y, 16, 0});
+                            break;
+                        case 5:
+                            beep();
+                            powerup = powerups[i].type; 
+                            hurtface = 10;
+                            poweruptime = 340;
                             break;
                         default:
                             beep();
@@ -486,16 +493,22 @@ int main (){
                         continue;
                     }
                     if (abs(mice[m].y - bullets[i].y) <= 1 && bullets[i].x >= mice[m].x && bullets[i]. x <= mice[m].x + 2){
-                        mice[m].alive = false;
-                        beep();
-                        if (powerup == 3){
-                            s += 100;
+                        mice[m].hp--;
+                        if (mice[m].hp <= 0){
+                            mice[m].alive = false;
+                            beep();
+                            if (powerup == 3){
+                                s += 100;
+                            }
+                            else {
+                                s += 50;
+                            }
+                            if (rand() % 5 == 0){
+                                powerups.push_back({mice[m].x + 1, mice[m].y + 1, 1 + (rand() % 3)});
+                            }
                         }
                         else {
-                            s += 50;
-                        }
-                        if (rand() % 5 == 0){
-                            powerups.push_back({mice[m].x + 1, mice[m].y + 1, 1 + (rand() % 3)});
+                            s += 25;
                         }
                         bullets.erase(bullets.begin() + i);
                         break;
@@ -607,7 +620,20 @@ int main (){
         if (entr == 0){
             for (int i = 0; i < alive.size(); i++){
                 if (rand() % bobmodd == 0){
-                    powerups.push_back({mice[alive[i]].x + 1, mice[alive[i]].y + 1, 4});
+                    if (rand () % 2 == 0){
+                        powerups.push_back({mice[alive[i]].x + 1, mice[alive[i]].y + 1, 4});
+                    }
+                    else {
+                        powerups.push_back({mice[alive[i]].x + 1, mice[alive[i]].y + 1, 5});
+                    }
+                }
+                if (rand() % bobmodd == 1 && mice[alive[i]].hp > 1){
+                    if (rand () % 2 == 0){
+                        powerups.push_back({mice[alive[i]].x + 1, mice[alive[i]].y + 1, 4});
+                    }
+                    else {
+                        powerups.push_back({mice[alive[i]].x + 1, mice[alive[i]].y + 1, 5});
+                    }
                 }
             }
         }
@@ -691,6 +717,11 @@ int main (){
                     }
                     attroff(COLOR_PAIR(2));
                     break;
+                case 5:
+                    attron(COLOR_PAIR(2));
+                    mvprintw(powerups[i].y, powerups[i].x, "#");
+                    attroff(COLOR_PAIR(2));
+                    break;
                 default:
                     attron(COLOR_PAIR(4));
                     mvprintw(powerups[i].y, powerups[i].x, "#");
@@ -714,13 +745,20 @@ int main (){
         attron(COLOR_PAIR(3));
         for (int i = 0; i < mice.size(); i++){ //mice print
             if (mice[i].alive == true){
-                mvprintw(mice[i].y, mice[i].x, dir == 1 ? "~o>" : "<o~");
+                if (mice[i].hp >=2 ){
+                    attron(A_BOLD);
+                    mvprintw(mice[i].y, mice[i].x, dir == 1 ? "~0>" : "<0~");
+                    attroff(A_BOLD);   
+                }
+                else {
+                    mvprintw(mice[i].y, mice[i].x, dir == 1 ? "~o>" : "<o~");
+                }
             }
         }
 
         std::string inf = "inf";
 
-        attroff(COLOR_PAIR(3)); //HUD PRINT
+        attroff(COLOR_PAIR(3)); //HUD PRINT & CHEATS ON THE RIGHT
 
         if (cheatsactive > 0){
             int cheatsdisp[] = {0, 0, 0};
