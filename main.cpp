@@ -340,6 +340,26 @@ int main (){
 
 
         //keypresses and what they do belows VVV
+        if (ch == '\t'){
+            nodelay(stdscr, FALSE);
+            attron(COLOR_PAIR(1) | A_BOLD);
+            mvprintw(Yborder / 2 - 1, Xborder / 2 - 3, "PAUSED");
+            attroff(COLOR_PAIR(1) | A_BOLD);
+            mvprintw(Yborder / 2 + 1, Xborder / 2 - 9, "TAB resume  Q quit");
+            refresh();
+
+            int pch = 0;
+            while (pch != '\t' && pch != 'q'){
+                pch = getch();
+            }
+
+            nodelay(stdscr, TRUE);
+            if (pch == 'q'){
+                r = false;
+            }
+            flushinp();
+            ch = ERR;
+        }
         if (ch == 'q'){ 
             r = 0;
         }
@@ -752,7 +772,7 @@ int main (){
         gotick++;
 
         int inp = getch();
-        if (gotick > 100 && inp == ' ' || inp == 'q'){
+        if (gotick > 100 && ( inp == ' ' || inp == 'q') ){
             goscreen = false;
         }
 
