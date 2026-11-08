@@ -35,6 +35,12 @@ struct powerup {
     // 4 -> bomb
 };
 
+struct popup {
+    int x, y;
+    int value;
+    int timer;
+};
+
 struct explosion {
     int x,y;
     int timer;
@@ -121,6 +127,28 @@ int main (){
     int dir = 1;
     int mtick = 0;
     int s = 0;
+
+    std::vector<popup> popup;
+    int combo = 1; //Combo stuff and mice hit stuff here V
+    int combot = 0;
+    int cpop = 0;
+
+    auto ppoint = [&](int pts, int mx, int my){
+        int pcombo = combo;
+        s += (combo * pts);
+        popup.push_back({mx, my, powerup == 3 ? 2*(combo * pts) : combo * pts, 20});
+        if (combo < 5){
+            combo++;
+        }
+        if (combo == 5 && pcombo < 5){
+            cpop = 40;
+            beep();
+        }
+        combot = 62;
+    };
+
+
+
     int wave = 1;
     int wstart = 0;
     int entrtick = 0;
@@ -167,7 +195,7 @@ int main (){
 
     int boughtam[4] = {0, 0, 0, 0};
     const char* upname[4] = {"+ Life", "+ Pwr Up time", "- Cooldown", "+ Bullet Limit"};
-    int price[4] = {3200, 1200, 2500, 2500};
+    int price[4] = {4700, 2800, 3600, 3200};
 
     auto Shop = [&](){   //name should be explanory, tweak from here if u wanna mess with the shop code i wrote
         std::vector<bullet> shb;
@@ -245,7 +273,7 @@ int main (){
                                 sh = false;
                             }
                             else {
-                                int cost = price[sign] + (1200 * (0 + boughtam[sign]));
+                                int cost = price[sign] * (1 + boughtam[sign]);
                                 bool max = (sign == 0) ? (lives >= 9) : (boughtam[sign] >= 4);
 
                                 if (max){
@@ -315,7 +343,7 @@ int main (){
             mvprintw(2, (Xborder - (int)snprintf(NULL, 0, "SCORE: %d", s)) / 2, "SCORE: %d", s);
 
             for (int i = 0; i < 4; i++){    // shop options print
-                int cost = price[i] + (1200 * (0 + boughtam[i]));
+                int cost = price[i] * (1 + boughtam[i]);
                 int max = (i == 0) ? (lives >= 9) : (boughtam[i] >= 4);
 
                 if (max){
@@ -533,6 +561,22 @@ int main (){
         }
 
 
+        if (combot > 0){ //combo and the popup logic here
+            combot--;
+            if (combot == 0){
+                combo = 1;
+            }
+        }
+
+        for (int i = popup.size() - 1; i >= 0; i--){
+            popup[i].timer--;
+            if (popup[i].timer % 5 == 0){
+                popup[i].y--;
+            }
+            if (popup[i].timer <= 0){
+                popup.erase(popup.begin() + i);
+            }
+        }
         
         stick++; //bg stars logic under here
         for (int i = 0; i < stars.size(); i++){
@@ -645,12 +689,7 @@ int main (){
                             powerup = powerups[i].type;
                             pface = 10;
                             poweruptime = 170 + powertbonus;
-                            if (powerup == 3){
-                                s+= 200;
-                            }
-                            else {
-                                s += 100;
-                            }
+                            ppoint(powerup == 3 ? 200 : 100, powerups[i].x, powerups[i].y);
                             break;  
                     }
                     powerups.erase(powerups.begin() + i);
@@ -666,7 +705,7 @@ int main (){
 
 
         btick++; //bulet logic
-        if (btick > 5){
+        if (btick > 3){
             btick = 0;
             for (int i = 0; i < bullets.size(); i++){
                 bullets[i].y--;
@@ -682,12 +721,7 @@ int main (){
                 for (int p = powerups.size() - 1; p >= 0; p--){
                     if (powerups[p].type == 4 && powerups[p].x == bullets[i].x && abs(powerups[p].y - bullets[i].y) <= 1){
                         boom.push_back({powerups[p].x, powerups[p].y, 16, 0});
-                        if (powerup == 3){
-                            s += 30;
-                        }
-                        else {
-                            s += 15;
-                        }
+                        ppoint(powerup == 3 ? 30 : 15, powerups[p].x, powerups[p].y);
                         bullets.erase(bullets.begin() + i);
                         powerups.erase(powerups.begin() + p);
                         break;
@@ -705,18 +739,13 @@ int main (){
                         if (mice[m].hp <= 0){
                             mice[m].alive = false;
                             beep();
-                            if (powerup == 3){
-                                s += 100;
-                            }
-                            else {
-                                s += 50;
-                            }
+                            ppoint(powerup == 3 ? 100 : 50, mice[m].x, mice[m].y);
                             if (rand() % 5 == 0){
                                 powerups.push_back({mice[m].x + 1, mice[m].y + 1, 1 + (rand() % 3)});
                             }
                         }
                         else {
-                            s += 25;
+                            ppoint(powerup == 3 ? 50 : 25, mice[m].x, mice[m].y);
                         }
                         bullets.erase(bullets.begin() + i);
                         break;
@@ -747,12 +776,7 @@ int main (){
                 if (abs(x - powerups[i].x) <= 2 && abs(y - powerups[i].y) <= 2 ){
                     if (powerups[i].type == 4){
                         boom.push_back({powerups[i].x, powerups[i].y, 16, 10});
-                        if (powerup == 3){
-                            s += 10;
-                        }
-                        else {
-                            s += 5;
-                        }
+                        ppoint(powerup == 3 ? 10 : 5, powerups[i].x, powerups[i].y);
                     }
                     powerups.erase(powerups.begin() + i);
                 }
@@ -761,6 +785,7 @@ int main (){
             if (abs(y - Ypl) <= 2 && Xpl + 3 >= x - 2 && Xpl - 3 <= x + 2){
                 if (gmode == false){
                     lives--;
+                    combo = 1;
                     s -= 250;
                     hurtface = 15;
                 }
@@ -772,12 +797,7 @@ int main (){
                } 
                if (abs(y - mice[i].y) <= 2 && mice[i].x + 2 >= x - 2 && mice[i].x <= x + 2){
                     mice[i].alive = false;
-                    if (powerup == 3){
-                        s += 100;
-                    }
-                    else {
-                        s += 50;
-                    }
+                    ppoint(powerup == 3 ? 100 : 50, mice[i].x, mice[i].y);
                     if (rand() % 3 == 0){
                         powerups.push_back({mice[i].x + 1, mice[i].y + 1, 1 + (rand() % 3)});
                     }
@@ -1003,6 +1023,42 @@ int main (){
         printw(" SCORE %07d", s);
         attroff(COLOR_PAIR(2));
         mvprintw(2, 0, "wave = %02d", wave);
+
+        if (cheatsactive == 0 && combo > 1){ //combo printing
+            int comboatt[] = {0, 0, 3, 4, 1, 2};
+            const char* combotitl[] = {"", "", "OK", "WOW", "PAWSOME", "MEOW"};
+            int attr = COLOR_PAIR(comboatt[combo]) | A_BOLD;
+
+            if (combo == 5 && (stick / 32) % 2 == 0){
+                attr |= A_REVERSE;
+            }
+            int cbar = combot * 10 / 62;
+            attron(attr);
+
+            mvprintw(1, Xborder - 24, "%-7s x%d [", combotitl[combo], combo);
+            for (int bar = 0; bar < 10; bar++){
+                addch(bar < cbar ? '=' : ' ');
+            }
+            addch(']');
+            attroff(attr);
+        }
+
+        if (cpop > 0){
+            cpop--;
+            if ((cpop / 16) % 2 == 0){
+                attron(COLOR_PAIR(2) | A_BOLD);
+                mvprintw(Yborder / 2 - 3, Xborder / 2 - 7, "MEOW ACHIEVED!");
+                attroff(COLOR_PAIR(2) | A_BOLD);
+            }
+        }
+
+        for (int i = 0; i < popup.size(); i ++){ //popup print 
+            if (popup[i].y >= 3){
+                attron(A_BOLD);
+                mvprintw(popup[i].y, popup[i].x, "+%d", popup[i].value);
+                attroff(A_BOLD);
+            }
+        }
 
         if (wstart > 0){ //The giant WAVE: # thing that appears
             wstart--;
