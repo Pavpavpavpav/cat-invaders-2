@@ -145,7 +145,7 @@ int main (){
     std::vector<mouse> mice;
     bossi boss;
     std::vector<curtatt> catt;
-    int wcatt;
+    int wcatt = 0;
     int dir = 1;
     int mtick = 0;
     int s = 0;
@@ -1079,19 +1079,26 @@ int main (){
                     }
                 }
 
-                if (stick % 12 == 0){
+                if (stick % 12 == 0 && catt.empty() == false && catt[0].del <= 0){
                     for (int i = catt.size() - 1; i >= 0; i--){
                         catt[i].y++;
 
                         if (catt[i].y == Ypl && catt[i].x >= Xpl - 3 && catt[i].x <= Xpl + 3){
-                            lives--;
-                            hurtface = 15;
-                            combo = 1;
+                            if (gmode == false){
+                                lives--;
+                                hurtface = 15;
+                                combo = 1;
+                            }
                         }
 
                         if (catt[i].y > Ypl){
                             catt.erase(catt.begin() + i);
                         }
+                    }
+                }
+                else if (catt.empty() == false) {
+                    for (int i = catt.size() - 1; i >= 0; i--){
+                        catt[i].del--;
                     }
                 }
             }
@@ -1302,6 +1309,14 @@ int main (){
                 attron(COLOR_PAIR(2) | A_BOLD);
                 mvprintw(Ypl - 3, Xborder / 2 - 11, "ALIEN CALLS FOR BACKUP!");
                 attroff(COLOR_PAIR(2) | A_BOLD);
+            }
+        }
+        
+        if(wcatt > 0){
+            wcatt--;
+            if ((wcatt / 16) % 2 == 0){
+                attron(COLOR_PAIR(2) | A_BOLD);
+                mvprintw(Ypl - 4, Xborder / 2 - 16, "ALIEN SHOOTS THE CURTAIN ATTACK!" );
             }
         }
         wnoutrefresh(stdscr);
