@@ -63,6 +63,12 @@ struct bossi {
     int spawn = 0;
     int hface = 0;
     int death = 0;
+    bool curtatt = false;
+};
+
+struct curtatt {
+    int x, y;
+    int del;
 };
 
 int main (){
@@ -138,6 +144,8 @@ int main (){
 
     std::vector<mouse> mice;
     bossi boss;
+    std::vector<curtatt> catt;
+    int wcatt;
     int dir = 1;
     int mtick = 0;
     int s = 0;
@@ -979,6 +987,8 @@ int main (){
                             ppoint(powerup == 3 ? 100 : 50, mice[i].x, mice[i].y);
                         }
                     }
+
+                    catt.clear();
                     if (lives < 9){
                         lives++;
                     }
@@ -1016,6 +1026,23 @@ int main (){
                     }
                 }
 
+                if (boss.hp <= boss.maxhp / 4 && boss.curtatt == false){
+                    boss.curtatt = true;
+
+                    int gap = rand() % (Xborder - 8);
+
+                    for (int x = 0; x < Xborder; x++){
+                        if (x >= gap && x < gap + 9){
+                            continue;
+                        }
+                        if (x % 2 == 1){
+                            continue;
+                        }
+                        catt.push_back({x, 0, 60});
+                    }
+                    wcatt = 60;
+                }
+
                 if (boss.mtick >= (boss.hp <= boss.maxhp / 2 ? 2 : 3)){
                     boss.mtick = 0; 
                     if (rand() % 3 != 0){
@@ -1049,6 +1076,22 @@ int main (){
                     else {
                         powerups.push_back({boss.x + 4, boss.y + 3, (rand() % 4 == 0) ? 5 : 4});
                         boss.ftick = 50;
+                    }
+                }
+
+                if (stick % 12 == 0){
+                    for (int i = catt.size() - 1; i >= 0; i--){
+                        catt[i].y++;
+
+                        if (catt[i].y == Ypl && catt[i].x >= Xpl - 3 && catt[i].x <= Xpl + 3){
+                            lives--;
+                            hurtface = 15;
+                            combo = 1;
+                        }
+
+                        if (catt[i].y > Ypl){
+                            catt.erase(catt.begin() + i);
+                        }
                     }
                 }
             }
@@ -1104,8 +1147,14 @@ int main (){
                     break;
             }
         }
-
         attroff(COLOR_PAIR(2));
+
+        attron(COLOR_PAIR(2) | A_BOLD); // curtain attack boss thing print
+        for (int i = 0; i < catt.size(); i++){
+            mvprintw(catt[i].y, catt[i].x, "V");
+        }
+        attroff(COLOR_PAIR(2) | A_BOLD);
+
         attron(COLOR_PAIR(3));
         for (int i = 0; i < mice.size(); i++){ //mice print
             if (mice[i].alive == true){
@@ -1120,7 +1169,7 @@ int main (){
             }
         }
 
-        if (boss.alive == true){
+        if (boss.alive == true){ //boss print
             const char* bsprite[3] = { "|\\_____/|", "( 0   0 )", " \\__v__/ "};
             if (boss.hface > 0){
                 if (rand() % 2 == 1){
@@ -1249,7 +1298,7 @@ int main (){
 
         if (bwarn > 0){ // warning when alien spawned mice
             bwarn--;
-            if ((bwarn / 6) % 2 == 0){
+            if ((bwarn / 16) % 2 == 0){
                 attron(COLOR_PAIR(2) | A_BOLD);
                 mvprintw(Ypl - 3, Xborder / 2 - 11, "ALIEN CALLS FOR BACKUP!");
                 attroff(COLOR_PAIR(2) | A_BOLD);
