@@ -991,14 +991,20 @@ int main (){
 
                 if (boss.mtick >= (boss.hp <= boss.maxhp / 2 ? 2 : 3)){
                     boss.mtick = 0; 
-                    if (rand() % 14 != 0){
+                    if (rand() % 3 != 0){
                         boss.x += boss.dir; 
                     }
                     else {
                         boss.x -= boss.dir; 
                     }
-                    if (boss.x <= 1 || boss.x + 9 >= Xborder - 1){
-                        boss.dir = -boss.dir;
+                    
+                    if (boss.x <= 1){
+                        boss.x = 1;
+                        boss.dir = 1;
+                    }
+                    if (boss.x + 9 >= Xborder - 1){
+                        boss.x = Xborder - 10;
+                        boss.dir = -1;
                     }
                 }
 
@@ -1203,8 +1209,14 @@ int main (){
         }
 
         if (wstart > 0){ //The giant WAVE: # thing that appears
-            wstart--;
-            mvprintw(Yborder / 2, Xborder / 2 - 5, "WAVE %d", wave);
+            if (wave % 5 == 0){
+                wstart--;
+                mvprintw(Yborder / 2, Xborder / 2 - 7, "!! BOSS WAVE !!");
+            }
+            else {
+                wstart--;
+                mvprintw(Yborder / 2, Xborder / 2 - 5, "WAVE %d", wave);
+            }
         }
         wnoutrefresh(stdscr);
         doupdate();
