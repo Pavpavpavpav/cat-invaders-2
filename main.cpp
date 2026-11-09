@@ -53,6 +53,18 @@ struct bgstar{
     int speed;
 };
 
+struct bossi {
+    bool alive = false;
+    int x, y;
+    int hp, maxhp;
+    int dir = 1;
+    int mtick = 0;
+    int ftick = 0;
+    bool uability = false;
+    int hface = 0;
+    int death = 0;
+};
+
 int main (){
     initscr();
     cbreak();
@@ -125,6 +137,7 @@ int main (){
     const char* powername[] { "none", "Spreadshot", "Frenzy", "Double points", "", "Confusion"};
 
     std::vector<mouse> mice;
+    bossi boss;
     int dir = 1;
     int mtick = 0;
     int s = 0;
@@ -163,10 +176,21 @@ int main (){
         dir = 1;
         mtick = 0;
 
-        for (int row = 0; row < 4; row++){
-            for (int col = 0; col < 8; col++){
-                mice.push_back({10 + col * 5, -3, true, 3 + row * 2, col * 3 + row * 8, (row > 2 - wave / 5) ? 2 : 1});
+        if (wave % 5 != 0){
+            for (int row = 0; row < 4; row++){
+                for (int col = 0; col < 8; col++){
+                    mice.push_back({10 + col * 5, -3, true, 3 + row * 2, col * 3 + row * 8, (row > 2 - wave / 5) ? 2 : 1});
+                }
             }
+        }
+        else {
+            boss = bossi();
+            boss.alive = true;
+            boss.x = Xborder / 2 - 4;
+            boss.y = -3;
+            boss.maxhp = 15 + wave * 2;
+            boss.hp = boss.maxhp;
+            boss.ftick = 90;
         }
         wstart = 62;
     };
@@ -560,7 +584,16 @@ int main (){
         if (Cheatc("bomb") || Cheatc("bobm")){
             powerups.push_back({Xpl, 1, 4});
         }
-
+        if (Cheatc("money") || Cheatc("$$$$$") || Cheatc("rich")){
+            s += 15000;
+        }
+        if (Cheatc("boring")){
+            wave = 4;
+            for (int i = 0; i < mice.size(); i++){
+                mice[i].alive = false;
+            }
+            boss.alive = false;  
+        }
 
         if (combot > 0){ //combo and the popup logic here
             combot--;
@@ -756,6 +789,17 @@ int main (){
                     }
                 }
             }
+
+            if (boss.alive == true && boss.hp > 0 && boss.y >= 3){
+                for (int i = bullets.size() - 1; i >= 0; i--){
+                    if (bullets[i].y >= boss.y && bullets[i].y <= boss.y + 2 && bullets[i].x >= boss.x && bullets[i].x <= boss.x + 8){
+                        boss.hp--;
+                        boss.hface = 8;
+                        ppoint(powerup == 3 ? 50 : 25, bullets[i].x, bullets[i].y);
+                        bullets.erase(bullets.begin() + i);
+                    }
+                }
+            }
         }
 
 
@@ -871,7 +915,7 @@ int main (){
         }
 
 
-        if (alive.empty()){ //if all dead make new wave basically
+        if (alive.empty() && boss.alive == false){ //if all dead make new wave basically
             wave++;
             Shop();
             Wave();
@@ -916,6 +960,67 @@ int main (){
 
         if (s < 0){
             s = 0;
+        }
+
+        if (boss.alive == true){
+            if (boss.hface > 0){
+                boss.hface--;
+            }
+
+            if (boss.hp <= 0){
+                if (boss.death == 0){
+                    boss.death = 90;
+                    ppoint(1000, boss.x + 4, boss.y);
+                    if (lives < 9){
+                        lives++;
+                    }
+                    pface = 40;
+                }
+                boss.death--;
+                if (boss.death <= 0){
+                    boss.alive = false;
+                }
+            }
+            else if (boss.y < 5){
+                if (stick % 12 == 0){
+                    boss.y++;
+                }
+            }
+            else {
+                boss.mtick++;
+
+                if (boss.mtick >= (boss.hp <= boss.maxhp / 2 ? 2 : 3)){
+                    boss.mtick = 0; 
+                    if (rand() % 14 != 0){
+                        boss.x += boss.dir; 
+                    }
+                    else {
+                        boss.x -= boss.dir; 
+                    }
+                    if (boss.x <= 1 || boss.x + 9 >= Xborder - 1){
+                        boss.dir = -boss.dir;
+                    }
+                }
+
+                boss.ftick--;
+
+                if (boss.ftick <= 0){
+                    if (rand() % 6 != 5){
+                        if (boss.hp <= boss.maxhp / 2){
+                            powerups.push_back({boss.x + 1, boss.y + 3, 4});
+                            powerups.push_back({boss.x + 4, boss.y + 3, 4});
+                            powerups.push_back({boss.x + 7, boss.y + 3, 4});
+                            boss.ftick = 70;
+                        }
+                    }
+                    else {
+                        powerups.push_back({boss.x + 4, boss.y + 3, (rand() % 4 == 0) ? 5 : 4});
+                        boss.ftick = 50;
+                    }
+                }
+            }
+
+
         }
         
         erase(); //printing the actuall stuffs such as the mice and the cat and the powerups and the bombs on the screen
@@ -990,6 +1095,39 @@ int main (){
                 else {
                     mvprintw(mice[i].y, mice[i].x, dir == 1 ? "~o>" : "<o~");
                 }
+            }
+        }
+
+        if (boss.alive == true){
+            const char* bsprite[3] = { "|\\_____/|", "( 0   0 )", " \\__v__/ "};
+            if (boss.hface > 0){
+                if (rand() % 2 == 1){
+                    bsprite[1] = "( x   X )";
+                }
+                else {
+                    bsprite[1] = "( X   x )";
+                }
+            }
+
+            int attr = COLOR_PAIR(1) | A_BOLD;
+            if (boss.hp <= 0 && (stick / 6) % 2 == 0){
+                attr = COLOR_PAIR(2) | A_BOLD;
+            }
+            attron(attr);
+            for (int r = 0; r < 3; r++){
+                mvprintw(boss.y + r, boss.x, "%s", bsprite[r]);
+            }
+            attroff(attr);
+
+            if (boss.hp > 0){
+                int bbar = boss.hp * 20 / boss.maxhp; 
+                attron(COLOR_PAIR(2) | A_BOLD);
+                mvprintw(3, Xborder / 2 - 14, "ALIEN [");
+                for (int bar = 0; bar < 20; bar++){
+                    addch(bar < bbar ? '#' : '-');
+                }
+                addch(']');
+                attroff(COLOR_PAIR(2) | A_BOLD);
             }
         }
 
