@@ -7,7 +7,7 @@
 
 //Hi! If u are trying to edit this code to tweak my game feel free to do so! I have left some comments that can explain which part of the code is what, but you might still have to dig a bit cos it is not the most optimized :P
 
-struct catsprite {
+struct catsprite { //names for the structs should be self explanatory
     std::vector<std::string> sprite;
 
 };
@@ -97,7 +97,7 @@ int main (){
 
     bkgd(COLOR_PAIR(5));
 
-    catsprite cat = {
+    catsprite cat = { //sprites that the cat can be/facial expressions
         { "=^. .^=",
           "=^- -^=", 
           "=^>.<^=",
@@ -123,6 +123,9 @@ int main (){
     int Xpl = Xborder / 2 - 2;
     int Ypl = Yborder - 4;
 
+    int shk = 0; //bomb screen shake
+    int shkt = 0;
+
     int lives = 3; //# of bombs the cat can withstanc
     int hurtface = 0;
 
@@ -134,7 +137,7 @@ int main (){
     int maxbullets = 1; //If ur changing it just remember that the max bullet size is this + 1 cos stuff is counted from 0 
     int pwrbulmult[] = {1, 3, 2, 1, 1, 1};
 
-    std::vector<bullet> bullets;
+    std::vector<bullet> bullets; //self explanatory from now on i think
     int btick = 0;
     int fireface = 0;
 
@@ -216,7 +219,7 @@ int main (){
     };
 
 
-    std::string typch;
+    std::string typch; //cheat stuff VVV
     bool gmode = false;
     bool evilcheat = false;
     bool nocd = false;
@@ -870,6 +873,7 @@ int main (){
             if (boom[k].cdel > 0 || boom[k].timer != 16){
                 continue;
             }
+            shkt = 8;
 
             beep();
 
@@ -1160,6 +1164,12 @@ int main (){
         }
         
         erase(); //printing the actuall stuffs such as the mice and the cat and the powerups and the bombs on the screen
+        
+        if (shkt > 0){
+            shkt--;
+            shk = (rand() % 3) - 1;
+        }
+
         for (int i = 0; i < stars.size(); i++){ //star print
             if (rand() % 40 == 0){
                 continue;
@@ -1176,11 +1186,11 @@ int main (){
         
         
         attron(COLOR_PAIR(1)); //cat print
-        mvprintw(Ypl, Xpl - 3, "%s", cat.sprite[currsprite].c_str());
+        mvprintw(Ypl, Xpl - 3 + shk, "%s", cat.sprite[currsprite].c_str());
         attroff(COLOR_PAIR(1));
         for (int i = 0; i < bullets.size(); i++){ //bullet print
             attron(A_BOLD);
-            mvprintw(bullets[i].y, bullets[i].x, "^");
+            mvprintw(bullets[i].y, bullets[i].x + shk, "^");
             attroff(A_BOLD);
         }
         for (int i = 0; i < powerups.size(); i++){ //powerup & bomb print
@@ -1188,21 +1198,21 @@ int main (){
                 case 4:
                     attron(COLOR_PAIR(2));
                     if (bobmtype == 1){
-                        mvprintw(powerups[i].y, powerups[i].x, "@");
+                        mvprintw(powerups[i].y, powerups[i].x + shk, "@");
                     }
                     else {
-                        mvprintw(powerups[i].y, powerups[i].x, "O");
+                        mvprintw(powerups[i].y, powerups[i].x + shk, "O");
                     }
                     attroff(COLOR_PAIR(2));
                     break;
                 case 5:
                     attron(COLOR_PAIR(2));
-                    mvprintw(powerups[i].y, powerups[i].x, "#");
+                    mvprintw(powerups[i].y, powerups[i].x + shk, "#");
                     attroff(COLOR_PAIR(2));
                     break;
                 default:
                     attron(COLOR_PAIR(4));
-                    mvprintw(powerups[i].y, powerups[i].x, "#");
+                    mvprintw(powerups[i].y, powerups[i].x + shk, "#");
                     attroff(COLOR_PAIR(4));
                     break;
             }
@@ -1211,7 +1221,7 @@ int main (){
 
         attron(COLOR_PAIR(2) | A_BOLD); // curtain attack boss thing print
         for (int i = 0; i < catt.size(); i++){
-            mvprintw(catt[i].y, catt[i].x, "V");
+            mvprintw(catt[i].y, catt[i].x + shk, "V");
         }
         attroff(COLOR_PAIR(2) | A_BOLD);
 
@@ -1220,11 +1230,11 @@ int main (){
             if (mice[i].alive == true){
                 if (mice[i].hp >=2 ){
                     attron(A_BOLD);
-                    mvprintw(mice[i].y, mice[i].x, dir == 1 ? "~0>" : "<0~");
+                    mvprintw(mice[i].y, mice[i].x + shk, dir == 1 ? "~0>" : "<0~");
                     attroff(A_BOLD);   
                 }
                 else {
-                    mvprintw(mice[i].y, mice[i].x, dir == 1 ? "~o>" : "<o~");
+                    mvprintw(mice[i].y, mice[i].x + shk, dir == 1 ? "~o>" : "<o~");
                 }
             }
         }
@@ -1232,7 +1242,7 @@ int main (){
         if (bonus.act == true){
             attron(COLOR_PAIR(4) | A_BOLD);
 
-            mvprintw(3, bonus.x, "<=-O-=>");
+            mvprintw(3, bonus.x + shk, "<=-O-=>");
 
             attroff(COLOR_PAIR(4) | A_BOLD);
         }
@@ -1254,14 +1264,14 @@ int main (){
             }
             attron(attr);
             for (int r = 0; r < 3; r++){
-                mvprintw(boss.y + r, boss.x, "%s", bsprite[r]);
+                mvprintw(boss.y + r, boss.x + shk, "%s", bsprite[r]);
             }
             attroff(attr);
 
             if (boss.hp > 0){
                 int bbar = boss.hp * 20 / boss.maxhp; 
                 attron(COLOR_PAIR(2) | A_BOLD);
-                mvprintw(3, Xborder / 2 - 14, "ALIEN [");
+                mvprintw(3, Xborder / 2 - 14 + shk, "ALIEN [");
                 for (int bar = 0; bar < 20; bar++){
                     addch(bar < bbar ? '#' : '-');
                 }
@@ -1273,11 +1283,11 @@ int main (){
         attron(COLOR_PAIR(2)); //explosion/boom or whatever print
         for (int i = 0; i < boom.size(); i++){
             if (boom[i].cdel > 0){
-                mvprintw(boom[i].y, boom[i].x, bobmtype == 1 ? "@" : "O" );
+                mvprintw(boom[i].y, boom[i].x + shk, bobmtype == 1 ? "@" : "O" );
             }
             else {
                 for (int y = -2; y <= 2; y++){
-                    mvprintw(boom[i].y + y, boom[i].x-2, "*****");
+                    mvprintw(boom[i].y + y, boom[i].x-2 + shk, "*****");
                 }
             }
         }
@@ -1290,32 +1300,32 @@ int main (){
             int cheatsdisp[] = {0, 0, 0};
             for (int i = 0; i < cheatsactive; i++){
                 if (cheatsdisp[0] == 0 && gmode == true){
-                    mvprintw(i, Xborder - 8, "GODMODE");
+                    mvprintw(i, Xborder - 8 + shk, "GODMODE");
                     cheatsdisp[0] = 1;
                 }
                 else if (cheatsdisp[1] == 0 && nocd == true){
-                    mvprintw(i, Xborder - 12, "NO COOLDOWN");
+                    mvprintw(i, Xborder - 12 + shk, "NO COOLDOWN");
                     cheatsdisp[1] = 1;
                 }
                 else if (cheatsdisp[2] == 0 && infbul == true){
-                    mvprintw(i, Xborder - 12, "INF BULLETS");
+                    mvprintw(i, Xborder - 12 + shk, "INF BULLETS");
                     cheatsdisp[2] = 1;
                 }
             }
         }
         if (infbul == false){
-            mvprintw(0, 0, "bullets=%d/%d cooldown=%.1f powertime=%d power=%s", (int)bullets.size(), (maxbullets + 1) * pwrbulmult[powerup], cooldown/31, poweruptime/31, powername[powerup]);
+            mvprintw(0, 0 + shk, "bullets=%d/%d cooldown=%.1f powertime=%d power=%s", (int)bullets.size(), (maxbullets + 1) * pwrbulmult[powerup], cooldown/31, poweruptime/31, powername[powerup]);
         }
         else {
-            mvprintw(0, 0, "bullets=%d/%s cooldown=%.1f powertime=%d power=%s", (int)bullets.size(), inf.c_str(), cooldown/31, poweruptime/31, powername[powerup]);
+            mvprintw(0, 0 + shk, "bullets=%d/%s cooldown=%.1f powertime=%d power=%s", (int)bullets.size(), inf.c_str(), cooldown/31, poweruptime/31, powername[powerup]);
         }
-        mvprintw(1, 0, "lives=");
+        mvprintw(1, 0 + shk, "lives=");
         attron(COLOR_PAIR(2));
         printw("%d", lives);
         attroff(COLOR_PAIR(2));
         printw(" SCORE %07d", s);
         attroff(COLOR_PAIR(2));
-        mvprintw(2, 0, "wave = %02d", wave);
+        mvprintw(2, 0 + shk, "wave = %02d", wave);
 
         if (cheatsactive == 0 && combo > 1){ //combo printing
             int comboatt[] = {0, 0, 3, 4, 1, 2};
@@ -1328,7 +1338,7 @@ int main (){
             int cbar = combot * 10 / 62;
             attron(attr);
 
-            mvprintw(1, Xborder - 24, "%-7s x%d [", combotitl[combo], combo);
+            mvprintw(1, Xborder - 24 + shk, "%-7s x%d [", combotitl[combo], combo);
             for (int bar = 0; bar < 10; bar++){
                 addch(bar < cbar ? '=' : ' ');
             }
@@ -1340,7 +1350,7 @@ int main (){
             cpop--;
             if ((cpop / 16) % 2 == 0){
                 attron(COLOR_PAIR(2) | A_BOLD);
-                mvprintw(Yborder / 2 - 3, Xborder / 2 - 7, "MEOW ACHIEVED!");
+                mvprintw(Yborder / 2 - 3, Xborder / 2 - 7 + shk, "MEOW ACHIEVED!");
                 attroff(COLOR_PAIR(2) | A_BOLD);
             }
         }
@@ -1348,19 +1358,19 @@ int main (){
         for (int i = 0; i < popup.size(); i ++){ //popup print 
             if (popup[i].y >= 3){
                 attron(A_BOLD);
-                mvprintw(popup[i].y, popup[i].x, "+%d", popup[i].value);
+                mvprintw(popup[i].y, popup[i].x + shk, "+%d", popup[i].value);
                 attroff(A_BOLD);
-            }
+            }  a
         }
 
         if (wstart > 0){ //The giant WAVE: # thing that appears
             if (wave % 5 == 0){
                 wstart--;
-                mvprintw(Yborder / 2, Xborder / 2 - 7, "!! BOSS WAVE !!");
+                mvprintw(Yborder / 2, Xborder / 2 - 7 + shk, "!! BOSS WAVE !!");
             }
             else {
                 wstart--;
-                mvprintw(Yborder / 2, Xborder / 2 - 5, "WAVE %d", wave);
+                mvprintw(Yborder / 2, Xborder / 2 - 5 + shk, "WAVE %d", wave);
             }
         }
 
@@ -1368,7 +1378,7 @@ int main (){
             bwarn--;
             if ((bwarn / 16) % 2 == 0){
                 attron(COLOR_PAIR(2) | A_BOLD);
-                mvprintw(Ypl - 3, Xborder / 2 - 11, "ALIEN CALLS FOR BACKUP!");
+                mvprintw(Ypl - 3, Xborder / 2 - 11 + shk, "ALIEN CALLS FOR BACKUP!");
                 attroff(COLOR_PAIR(2) | A_BOLD);
             }
         }
@@ -1377,7 +1387,7 @@ int main (){
             wcatt--;
             if ((wcatt / 16) % 2 == 0){
                 attron(COLOR_PAIR(2) | A_BOLD);
-                mvprintw(Ypl - 4, Xborder / 2 - 16, "ALIEN SHOOTS THE CURTAIN ATTACK!" );
+                mvprintw(Ypl - 4, Xborder / 2 - 16 + shk, "ALIEN SHOOTS THE CURTAIN ATTACK!" );
             }
         }
         wnoutrefresh(stdscr);
@@ -1417,7 +1427,7 @@ int main (){
             }
             attron(A_DIM);
             if (stars[i].speed <= 4){
-                mvprintw(stars[i].y, stars[i].x, "*");
+                mvprintw(stars[i].y, stars[i].x, "*"); 
             }
             else {
                 mvprintw(stars[i].y, stars[i].x, ".");

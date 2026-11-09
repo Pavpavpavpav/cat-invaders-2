@@ -10,10 +10,13 @@ Also if the game imidiatelly exits, resize your terminal to be bigger!
 !windows only!
 To play the game, download either the .exe file or the zip, and run it. Dismiss any warnings that windows may give you and run the program;
 
-~0> - mice
-@ - bombs
-hastags - powerups
-=^. .^= - cat
-^ - bullets
+- ~0> - mice
+- @ - bombs
+- hastags - powerups
+- =^. .^= - cat
+- ^ - bullets
+- red hastags - EVIL powerups
+- big alien thingy - boss
+
 
 made by pav, feel free to use this code as a base for your own game or for just making a reskin of it!
