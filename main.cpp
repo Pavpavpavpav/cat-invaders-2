@@ -60,7 +60,7 @@ struct bossi {
     int dir = 1;
     int mtick = 0;
     int ftick = 0;
-    bool uability = false;
+    int spawn = 0;
     int hface = 0;
     int death = 0;
 };
@@ -166,6 +166,7 @@ int main (){
     int wave = 1;
     int wstart = 0;
     int entrtick = 0;
+    int bwarn = 0;
 
     auto Wave = [&](){ //initiate spawn of mice
         mice.clear();
@@ -971,10 +972,20 @@ int main (){
                 if (boss.death == 0){
                     boss.death = 90;
                     ppoint(1000, boss.x + 4, boss.y);
+
+                    for (int i = 0; i < mice.size(); i++){
+                        if (mice[i].alive == true){
+                            mice[i].alive = false; 
+                            ppoint(powerup == 3 ? 100 : 50, mice[i].x, mice[i].y);
+                        }
+                    }
                     if (lives < 9){
                         lives++;
                     }
                     pface = 40;
+                    for (int d = 0; d < 5; d++) {
+                        boom.push_back({boss.x + d * 2, boss.y + (rand() % 3), 16, d * 6});
+                    }
                 }
                 boss.death--;
                 if (boss.death <= 0){
@@ -988,6 +999,22 @@ int main (){
             }
             else {
                 boss.mtick++;
+
+                if (boss.hp <= boss.maxhp / 2){
+                    if (boss.spawn > 0){
+                        boss.spawn--;
+                    }
+                    if (boss.spawn <= 0 && alive.empty()){
+                        mice.clear();
+                        dir = 1;
+                        int mtick = 0;
+                        for (int m = 0; m < 8; m++){
+                            mice.push_back({((Xborder - 38) / 2) + m * 5, 0, true, boss.y + 6, m * 3, 2});
+                        }
+                        boss.spawn = 700;
+                        bwarn = 62;
+                    }
+                }
 
                 if (boss.mtick >= (boss.hp <= boss.maxhp / 2 ? 2 : 3)){
                     boss.mtick = 0; 
@@ -1078,17 +1105,6 @@ int main (){
             }
         }
 
-        attron(COLOR_PAIR(2)); //explosion/boom or whatever print
-        for (int i = 0; i < boom.size(); i++){
-            if (boom[i].cdel > 0){
-                mvprintw(boom[i].y, boom[i].x, bobmtype == 1 ? "@" : "O" );
-            }
-            else {
-                for (int y = -2; y <= 2; y++){
-                    mvprintw(boom[i].y + y, boom[i].x-2, "*****");
-                }
-            }
-        }
         attroff(COLOR_PAIR(2));
         attron(COLOR_PAIR(3));
         for (int i = 0; i < mice.size(); i++){ //mice print
@@ -1134,6 +1150,18 @@ int main (){
                 }
                 addch(']');
                 attroff(COLOR_PAIR(2) | A_BOLD);
+            }
+        }
+
+        attron(COLOR_PAIR(2)); //explosion/boom or whatever print
+        for (int i = 0; i < boom.size(); i++){
+            if (boom[i].cdel > 0){
+                mvprintw(boom[i].y, boom[i].x, bobmtype == 1 ? "@" : "O" );
+            }
+            else {
+                for (int y = -2; y <= 2; y++){
+                    mvprintw(boom[i].y + y, boom[i].x-2, "*****");
+                }
             }
         }
 
@@ -1216,6 +1244,15 @@ int main (){
             else {
                 wstart--;
                 mvprintw(Yborder / 2, Xborder / 2 - 5, "WAVE %d", wave);
+            }
+        }
+
+        if (bwarn > 0){ // warning when alien spawned mice
+            bwarn--;
+            if ((bwarn / 6) % 2 == 0){
+                attron(COLOR_PAIR(2) | A_BOLD);
+                mvprintw(Ypl - 3, Xborder / 2 - 11, "ALIEN CALLS FOR BACKUP!");
+                attroff(COLOR_PAIR(2) | A_BOLD);
             }
         }
         wnoutrefresh(stdscr);
