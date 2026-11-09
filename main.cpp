@@ -71,6 +71,15 @@ struct curtatt {
     int del;
 };
 
+struct ufo {
+    bool act = false;
+    int x;
+    int dir; 
+    int speed;
+    int t;
+    int del; 
+};
+
 int main (){
     initscr();
     cbreak();
@@ -170,6 +179,8 @@ int main (){
     };
 
 
+    ufo bonus; //ufo stuffs
+    bonus.del = (rand() % 3000) + 2000;
 
     int wave = 1;
     int wstart = 0;
@@ -711,6 +722,30 @@ int main (){
             fireface--;
         }
 
+        bonus.t++; // Ubonus point UFO stuffs here VVV
+        if (bonus.act == false){
+            
+            if (bonus.t >= bonus.del){
+                bonus.act = true;
+                bonus.dir = (rand() % 2 == 0) ? 1 : -1;
+                bonus.x = (bonus.dir == 1) ? 1 : Xborder - 6;
+                bonus.speed = (rand() % 2) + 1;
+                bonus.t = 0;
+
+                bonus.del = (rand() % 3000) + 2000;
+            }
+        }
+
+        if (bonus.act == true){
+            if (bonus.t % bonus.speed == 0){
+                bonus.t = 0;
+                bonus.x += bonus.dir;
+            }
+            if (bonus.x < -6 || bonus.x >= Xborder){
+                bonus.act = false;
+            }
+        }
+
         ptick++; //powerup logic
         if (ptick > 6){
             ptick = 0;
@@ -806,6 +841,24 @@ int main (){
                         boss.hface = 8;
                         ppoint(powerup == 3 ? 50 : 25, bullets[i].x, bullets[i].y);
                         bullets.erase(bullets.begin() + i);
+                    }
+                }
+            }
+
+            if (bonus.act == true){
+                int mult = 1;
+                if (bonus.speed == 1){
+                    mult = 2;
+                }
+                for (int i = bullets.size() - 1; i >= 0; i--) {
+                    if (bullets[i].y == 3 && bullets[i].x >= bonus.x && bullets[i].x <= bonus.x + 5){
+                        bonus.act = false; 
+
+                        ppoint(powerup == 3 ? 2000 * mult : 1000 * mult, bonus.x + 2, 4);
+                        beep();
+
+                        bullets.erase(bullets.begin() + i);
+                        break;
                     }
                 }
             }
@@ -1174,6 +1227,14 @@ int main (){
                     mvprintw(mice[i].y, mice[i].x, dir == 1 ? "~o>" : "<o~");
                 }
             }
+        }
+
+        if (bonus.act == true){
+            attron(COLOR_PAIR(4) | A_BOLD);
+
+            mvprintw(3, bonus.x, "<=-O-=>");
+
+            attroff(COLOR_PAIR(4) | A_BOLD);
         }
 
         if (boss.alive == true){ //boss print
