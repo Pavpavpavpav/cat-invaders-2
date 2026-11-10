@@ -1,0 +1,35 @@
+name: build-windows
+on:
+  push:
+  workflow_dispatch:
+
+jobs:
+  build:
+    runs-on: windows-latest
+    defaults:
+      run:
+        shell: msys2 {0}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: msys2/setup-msys2@v2
+        with:
+          msystem: MINGW64
+          update: true
+          install: >-
+            mingw-w64-x86_64-gcc
+            mingw-w64-x86_64-pdcurses
+            zip
+      - name: Build
+        run: g++ main.cpp -o cat-invaders.exe -static -lpdcurses
+      - name: Package
+        run: |
+          mkdir cat-invaders
+          cp cat-invaders.exe cat-invaders/
+          cp README.md cat-invaders/
+          zip -r cat-invaders-windows.zip cat-invaders
+      - uses: actions/upload-artifact@v4
+        with:
+          name: cat-invaders-windows
+          path: |
+            cat-invaders.exe
+            cat-invaders-windows.zip
