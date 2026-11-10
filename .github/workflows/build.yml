@@ -1,10 +1,10 @@
-name: build-windows
+name: build
 on:
   push:
   workflow_dispatch:
 
 jobs:
-  build:
+  windows:
     runs-on: windows-latest
     defaults:
       run:
@@ -33,3 +33,23 @@ jobs:
           path: |
             cat-invaders.exe
             cat-invaders-windows.zip
+
+  linux:
+    runs-on: ubuntu-22.04
+    steps:
+      - uses: actions/checkout@v4
+      - name: Install ncurses
+        run: sudo apt-get update && sudo apt-get install -y libncurses-dev
+      - name: Build
+        run: g++ main.cpp -o cat-invaders -lncurses
+      - name: Package
+        run: |
+          mkdir cat-invaders
+          cp cat-invaders cat-invaders/
+          cp README.md cat-invaders/
+          chmod +x cat-invaders/cat-invaders
+          tar -czf cat-invaders-linux.tar.gz cat-invaders
+      - uses: actions/upload-artifact@v4
+        with:
+          name: cat-invaders-linux
+          path: cat-invaders-linux.tar.gz
