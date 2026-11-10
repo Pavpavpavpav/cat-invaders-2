@@ -1360,7 +1360,7 @@ int main (){
                 attron(A_BOLD);
                 mvprintw(popup[i].y, popup[i].x + shk, "+%d", popup[i].value);
                 attroff(A_BOLD);
-            }  a
+            }  
         }
 
         if (wstart > 0){ //The giant WAVE: # thing that appears
