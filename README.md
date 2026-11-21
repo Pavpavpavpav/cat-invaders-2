@@ -10,9 +10,12 @@ Also if the game imidiatelly exits, resize your terminal to be bigger!
 # How to play?
 
 1. Download the .exe or the .zip and run cat-invaders.exe
-2. Disregard the windows popup as the exe is unsigned ()
-
-3. If you are on linux: install the ncurses library (no clue how to do this as I do not use linux).
+2. Disregard the windows popup as the exe is unsigned 
+3. If you are on Linux open the terminal in the folder after unzipping it and run the following:
+  ```bash
+   chmod +x cat-invaders
+   ./cat-invaders
+   ```
 
 # Symbols:
 
